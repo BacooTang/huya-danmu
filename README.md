@@ -22,7 +22,7 @@ const roomid = 'kaerlol'
 const client = new huya_danmu(roomid)
 
 client.on('connect', () => {
-    console.log(`已连接星颜 ${roomid}房间弹幕~`)
+    console.log(`已连接虎牙 ${roomid}房间弹幕~`)
 })
 
 client.on('message', msg => {
@@ -126,6 +126,7 @@ msg对象type有chat,gift,online三种值
         },
         count: '礼物数量,Number',
         price: '礼物总价值(单位Y币),Number',
+        id: '唯一ID,String',
         raw: '原始消息,Object'
     }
 ```

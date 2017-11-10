@@ -1,6 +1,6 @@
 {
   "name": "huya-danmu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "huya danmu module",
   "main": "index.js",
   "scripts": {
@@ -19,9 +19,10 @@
     "url": "https://github.com/BacooTang/huya-danmu/issues"
   },
   "dependencies": {
-    "to-arraybuffer": "*",
+    "md5": "*",
     "ws": "*",
     "request": "*",
+    "to-arraybuffer": "*",
     "request-promise": "*"
   },
   "homepage": "https://github.com/BacooTang/huya-danmu#readme"
