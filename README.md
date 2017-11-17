@@ -1,5 +1,7 @@
 # huya-danmu
 
+[![Coverage Status](https://coveralls.io/repos/github/BacooTang/huya-danmu/badge.svg?branch=master)](https://coveralls.io/github/BacooTang/huya-danmu?branch=master)
+
 huya-danmu 是Node.js版本虎牙直播弹幕监听模块。
 
 简单易用，使用不到三十行代码，你就可以使用Node.js基于弹幕进一步开发。

@@ -2,4 +2,7 @@ node_modules/
 package-lock.json
 .DS_Store
 .npmignore
+.nyc_output
+.coveralls.yml
+coverage
 test.js

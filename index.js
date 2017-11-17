@@ -14,9 +14,10 @@ class huya_danmu extends events {
     constructor(roomid) {
         super()
         this._roomid = roomid
+        this._ws_url = 'ws://ws.api.huya.com'
         this._gift_info = {}
         this._chat_list = new List()
-        this._emitter = new events.EventEmitter();
+        this._emitter = new events.EventEmitter()
     }
 
     async _get_chat_info() {
@@ -36,9 +37,7 @@ class huya_danmu extends events {
                 eval(body[1] + "info.subsid = TT_ROOM_DATA.sid;info.topsid=TT_ROOM_DATA.id;info.yyuid=TT_PROFILE_INFO.lp")
                 return info
             }
-        } catch (e) {
-            return
-        }
+        } catch (e) { }
     }
 
     async start() {
@@ -57,13 +56,14 @@ class huya_danmu extends events {
 
 
     _start_ws() {
-        this._client = new ws("ws://ws.api.huya.com", { perMessageDeflate: false })
+        this._client = new ws(this._ws_url, { perMessageDeflate: false })
         this._client.on('open', () => {
             this._get_gift_list()
             this._bind_ws_info()
             this._heartbeat()
             this._heartbeat_timer = setInterval(this._heartbeat.bind(this), HEARTBEAT_INTERVAL)
             this._fresh_gift_list_timer = setInterval(this._get_gift_list.bind(this), FRESH_GIFT_INTERVAL)
+            this.emit('connect')
         })
         this._client.on('error', err => {
             this.emit('error', err)
@@ -74,7 +74,6 @@ class huya_danmu extends events {
         })
         this._client.on('message', this._on_mes.bind(this))
         this._emitter.on("8006", msg => {
-            if (!this._starting) return
             let msg_obj = {
                 type: 'online',
                 time: new Date().getTime(),
@@ -84,7 +83,6 @@ class huya_danmu extends events {
             this.emit('message', msg_obj)
         })
         this._emitter.on("1400", msg => {
-            if (!this._starting) return
             let msg_obj = {
                 type: 'chat',
                 time: new Date().getTime(),
@@ -100,7 +98,7 @@ class huya_danmu extends events {
         })
         this._emitter.on("6501", msg => {
             if (!this._starting || msg.lPresenterUid != this._info.yyuid) return
-            let gift = this._gift_info[msg.iItemType + '']
+            let gift = this._gift_info[msg.iItemType + ''] || { name: '未知礼物', price: 0 }
             let id = md5(`${msg.iItemType}${msg.lPresenterUid}${msg.lSenderUid}${msg.iItemCount}${msg.iComboScore}`)
             let msg_obj = {
                 type: 'gift',
@@ -118,8 +116,6 @@ class huya_danmu extends events {
             this.emit('message', msg_obj)
         })
         this._emitter.on("getPropsList", msg => {
-            if (!this._starting) return
-            this._gift_info = this._gift_info || {}
             msg.vPropsItemList.value.forEach(item => {
                 this._gift_info[item.iPropsId + ''] = {
                     name: item.sPropsName,
@@ -184,14 +180,9 @@ class huya_danmu extends events {
                     let n = new Taf.Wup()
                     n.decode(i.vData.buffer)
                     let s = TafMx.WupMapping[n.sFuncName]
-                    if (s) {
-                        s = new s()
-                        let o = n.newdata.get("tRsp") ? "tRsp" : "tResp"
-                        n.readStruct(o, s, TafMx.WupMapping[n.sFuncName])
-                        this._emitter.emit(n.sFuncName, s)
-                    } else {
-                        this._emitter.emit(n.sFuncName)
-                    }
+                    s = new s()
+                    n.readStruct('tRsp', s, TafMx.WupMapping[n.sFuncName])
+                    this._emitter.emit(n.sFuncName, s)
                     break
                 case HUYA.EWebSocketCommandType.EWSCmdS2C_MsgPushReq:
                     e = new Taf.JceInputStream(i.vData.buffer)
