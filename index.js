@@ -1,10 +1,9 @@
 const ws = require('ws')
 const md5 = require('md5')
-const list = require('./list')
 const events = require('events')
 const request = require('request-promise')
 const to_arraybuffer = require('to-arraybuffer')
-const { Taf, TafMx, HUYA } = require('./lib')
+const { Taf, TafMx, HUYA, List } = require('huya-lib')
 const REQUEST_TIMEOUT = 10000
 const HEARTBEAT_INTERVAL = 60000
 const FRESH_GIFT_INTERVAL = 30 * 60 * 1000
@@ -16,7 +15,7 @@ class huya_danmu extends events {
         super()
         this._roomid = roomid
         this._gift_info = {}
-        this._chat_list = new list()
+        this._chat_list = new List()
         this._emitter = new events.EventEmitter();
     }
 

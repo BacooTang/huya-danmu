@@ -1,17 +1,20 @@
 {
   "name": "huya-danmu",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "huya danmu module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava",
+    "report": "nyc ava --verbose && nyc report --reporter=html",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BacooTang/huya-danmu.git"
   },
   "keywords": [
-    "huya"
+    "huya",
+    "danmu"
   ],
   "author": "BacooTang",
   "license": "MIT",
@@ -19,11 +22,17 @@
     "url": "https://github.com/BacooTang/huya-danmu/issues"
   },
   "dependencies": {
+    "huya-lib": "*",
     "md5": "*",
-    "ws": "*",
     "request": "*",
+    "request-promise": "*",
     "to-arraybuffer": "*",
-    "request-promise": "*"
+    "ws": "*"
   },
-  "homepage": "https://github.com/BacooTang/huya-danmu#readme"
+  "homepage": "https://github.com/BacooTang/huya-danmu#readme",
+  "devDependencies": {
+    "ava": "^0.23.0",
+    "coveralls": "^3.0.0",
+    "nyc": "^11.3.0"
+  }
 }
