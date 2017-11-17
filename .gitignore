@@ -5,4 +5,3 @@ package-lock.json
 .nyc_output
 .coveralls.yml
 coverage
-test.js

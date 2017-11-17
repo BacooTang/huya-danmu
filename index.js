@@ -14,9 +14,9 @@ class huya_danmu extends events {
     constructor(roomid) {
         super()
         this._roomid = roomid
-        this._ws_url = 'ws://ws.api.huya.com'
         this._gift_info = {}
         this._chat_list = new List()
+        this._ws_url = 'ws://ws.api.huya.com'
         this._emitter = new events.EventEmitter()
     }
 
@@ -97,7 +97,7 @@ class huya_danmu extends events {
             can_emit && this.emit('message', msg_obj)
         })
         this._emitter.on("6501", msg => {
-            if (!this._starting || msg.lPresenterUid != this._info.yyuid) return
+            if (msg.lPresenterUid != this._info.yyuid) return
             let gift = this._gift_info[msg.iItemType + ''] || { name: '未知礼物', price: 0 }
             let id = md5(`${msg.iItemType}${msg.lPresenterUid}${msg.lSenderUid}${msg.iItemCount}${msg.iComboScore}`)
             let msg_obj = {
@@ -159,13 +159,9 @@ class huya_danmu extends events {
         heart_beat_req.tId = user_id
         heart_beat_req.lTid = this._info.topsid
         heart_beat_req.lSid = this._info.subsid
-        heart_beat_req.lShortTid = 0
         heart_beat_req.lPid = this._info.yyuid
         heart_beat_req.eLineType = 1
-        heart_beat_req.iFps = 0
         heart_beat_req.iAttendee = this._info.totalCount
-        heart_beat_req.iBandwidth = 0
-        heart_beat_req.iLastHeartElapseTime = 0
         this._send_wup("onlineui", "OnUserHeartBeat", heart_beat_req)
     }
 
