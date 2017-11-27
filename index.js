@@ -83,6 +83,7 @@ class huya_danmu extends events {
             this.emit('message', msg_obj)
         })
         this._emitter.on("1400", msg => {
+            let id = md5(JSON.stringify(msg))
             let msg_obj = {
                 type: 'chat',
                 time: new Date().getTime(),
@@ -90,6 +91,7 @@ class huya_danmu extends events {
                     name: msg.tUserInfo.sNickName,
                     rid: msg.tUserInfo.lUid + '',
                 },
+                id: id,
                 content: msg.sContent,
                 raw: msg
             }
@@ -99,7 +101,7 @@ class huya_danmu extends events {
         this._emitter.on("6501", msg => {
             if (msg.lPresenterUid != this._info.yyuid) return
             let gift = this._gift_info[msg.iItemType + ''] || { name: '未知礼物', price: 0 }
-            let id = md5(`${msg.iItemType}${msg.lPresenterUid}${msg.lSenderUid}${msg.iItemCount}${msg.iComboScore}`)
+            let id = md5(JSON.stringify(msg))
             let msg_obj = {
                 type: 'gift',
                 time: new Date().getTime(),

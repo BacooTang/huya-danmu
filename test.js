@@ -221,3 +221,20 @@ test.cb('catch on ws error', t => {
         t.end()
     })
 })
+
+
+// const huya_danmu = require('./index')
+
+
+// for (let i = 0; i < 2; i++) {
+//     const client = new huya_danmu('edc595')
+
+//     client.on('message', msg => {
+//         if (msg.type === 'gift') {
+//             console.log(JSON.stringify(msg));
+//         }
+//     })
+
+//     client.start()
+
+// }
