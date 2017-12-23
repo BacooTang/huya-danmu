@@ -157,41 +157,38 @@ class huya_danmu extends events {
     _heartbeat() {
         let heart_beat_req = new HUYA.UserHeartBeatReq()
         let user_id = new HUYA.UserId()
-        user_id.sHuYaUA = "adr_wap"
+        user_id.sHuYaUA = "webh5&1.0.0&websocket"
         heart_beat_req.tId = user_id
         heart_beat_req.lTid = this._info.topsid
         heart_beat_req.lSid = this._info.subsid
         heart_beat_req.lPid = this._info.yyuid
         heart_beat_req.eLineType = 1
-        heart_beat_req.iAttendee = this._info.totalCount
         this._send_wup("onlineui", "OnUserHeartBeat", heart_beat_req)
     }
 
     _on_mes(data) {
         try {
             data = to_arraybuffer(data)
-            let e = new Taf.JceInputStream(data)
-            let i = new HUYA.WebSocketCommand()
-            i.readFrom(e)
-            switch (i.iCmdType) {
+            let stream = new Taf.JceInputStream(data)
+            let command = new HUYA.WebSocketCommand()
+            command.readFrom(stream)
+            switch (command.iCmdType) {
                 case HUYA.EWebSocketCommandType.EWSCmd_WupRsp:
-                    let n = new Taf.Wup()
-                    n.decode(i.vData.buffer)
-                    let s = TafMx.WupMapping[n.sFuncName]
-                    s = new s()
-                    n.readStruct('tRsp', s, TafMx.WupMapping[n.sFuncName])
-                    this._emitter.emit(n.sFuncName, s)
+                    let wup = new Taf.Wup()
+                    wup.decode(command.vData.buffer)
+                    let map = new (TafMx.WupMapping[wup.sFuncName])()
+                    wup.readStruct('tRsp', map, TafMx.WupMapping[wup.sFuncName])
+                    this._emitter.emit(wup.sFuncName, map)
                     break
                 case HUYA.EWebSocketCommandType.EWSCmdS2C_MsgPushReq:
-                    e = new Taf.JceInputStream(i.vData.buffer)
-                    let h = new HUYA.WSPushMessage()
-                    h.readFrom(e)
-                    e = new Taf.JceInputStream(h.sMsg.buffer)
-                    let p = TafMx.UriMapping[h.iUri]
-                    if (p) {
-                        p = new p()
-                        p.readFrom(e)
-                        this._emitter.emit(h.iUri, p)
+                    stream = new Taf.JceInputStream(command.vData.buffer)
+                    let msg = new HUYA.WSPushMessage()
+                    msg.readFrom(stream)
+                    stream = new Taf.JceInputStream(msg.sMsg.buffer)
+                    if (TafMx.UriMapping[msg.iUri]) {
+                        let map = new (TafMx.UriMapping[msg.iUri])()
+                        map.readFrom(stream)
+                        this._emitter.emit(msg.iUri, map)
                     }
                     break
                 default:
@@ -203,18 +200,18 @@ class huya_danmu extends events {
 
     }
 
-    _send_wup(t, e, r) {
+    _send_wup(action, callback, req) {
         try {
-            let n = new Taf.Wup()
-            n.setServant(t)
-            n.setFunc(e)
-            n.writeStruct("tReq", r)
-            let s = new HUYA.WebSocketCommand()
-            s.iCmdType = HUYA.EWebSocketCommandType.EWSCmd_WupReq
-            s.vData = n.encode()
-            let o = new Taf.JceOutputStream()
-            s.writeTo(o)
-            this._client.send(o.getBuffer())
+            let wup = new Taf.Wup()
+            wup.setServant(action)
+            wup.setFunc(callback)
+            wup.writeStruct("tReq", req)
+            let command = new HUYA.WebSocketCommand()
+            command.iCmdType = HUYA.EWebSocketCommandType.EWSCmd_WupReq
+            command.vData = wup.encode()
+            let stream = new Taf.JceOutputStream()
+            command.writeTo(stream)
+            this._client.send(stream.getBuffer())
         } catch (err) {
             this.emit('error', err)
         }
