@@ -22,21 +22,24 @@ class huya_danmu extends events {
 
     async _get_chat_info() {
         let opt = {
-            url: `http://www.huya.com/${this._roomid}`,
+            url: `https://m.huya.com/${this._roomid}`,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36'
             },
             timeout: REQUEST_TIMEOUT,
             gzip: true
         }
         try {
             let body = await request(opt)
-            body = body.match(/(var TT_ROOM_DATA.*\r)/)
-            if (body) {
-                let info = {}
-                eval(body[1] + "info.subsid = TT_ROOM_DATA.sid;info.topsid=TT_ROOM_DATA.id;info.yyuid=TT_PROFILE_INFO.lp")
-                return info
-            }
+            let info = {}
+            let subsid_array = body.match(/var SUBSID = '(.*)';/)
+            let topsid_array = body.match(/var TOPSID = '(.*)';/)
+            let yyuid_array = body.match(/ayyuid: '(.*)',/)
+            if (!subsid_array || !topsid_array || !yyuid_array) return
+            info.subsid = subsid_array[1] === '' ? 0 : parseInt(subsid_array[1])
+            info.topsid = topsid_array[1] === '' ? 0 : parseInt(topsid_array[1])
+            info.yyuid = parseInt(yyuid_array[1])
+            return info
         } catch (e) { }
     }
 
