@@ -226,7 +226,10 @@
 const huya_danmu = require('./index')
 
 
-const client = new huya_danmu('edc595')
+const client = new huya_danmu('edc595', , {
+    ip: '193.93.194.134',
+    port: 1085
+})
 
 client.on('message', msg => {
     if (msg.type === 'gift') {

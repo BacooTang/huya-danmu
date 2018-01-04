@@ -3,6 +3,7 @@ const md5 = require('md5')
 const events = require('events')
 const request = require('request-promise')
 const to_arraybuffer = require('to-arraybuffer')
+const socks_agent = require('socks-proxy-agent')
 const { Taf, TafMx, HUYA, List } = require('huya-lib')
 const REQUEST_TIMEOUT = 10000
 const HEARTBEAT_INTERVAL = 60000
@@ -11,13 +12,25 @@ const FRESH_GIFT_INTERVAL = 30 * 60 * 1000
 
 class huya_danmu extends events {
 
-    constructor(roomid) {
+    constructor(roomid, proxy) {
         super()
         this._roomid = roomid
+        this.set_proxy(proxy)
         this._gift_info = {}
         this._chat_list = new List()
         this._ws_url = 'ws://ws.api.huya.com'
         this._emitter = new events.EventEmitter()
+    }
+
+    set_proxy(proxy) {
+        this._agent = null
+        if (proxy) {
+            let auth = ''
+            if (proxy.name && proxy.pass)
+                auth = `${proxy.name}:${proxy.pass}@`
+            let socks_url = `socks://${auth}${proxy.ip}:${proxy.port || 8080}`
+            this._agent = new socks_agent(socks_url)
+        }
     }
 
     async _get_chat_info() {
@@ -27,7 +40,8 @@ class huya_danmu extends events {
                 'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36'
             },
             timeout: REQUEST_TIMEOUT,
-            gzip: true
+            gzip: true,
+            agent: this._agent
         }
         try {
             let body = await request(opt)
@@ -59,7 +73,10 @@ class huya_danmu extends events {
 
 
     _start_ws() {
-        this._client = new ws(this._ws_url, { perMessageDeflate: false })
+        this._client = new ws(this._ws_url, {
+            perMessageDeflate: false,
+            agent: this._agent
+        })
         this._client.on('open', () => {
             this._get_gift_list()
             this._bind_ws_info()
