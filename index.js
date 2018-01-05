@@ -132,6 +132,7 @@ class huya_danmu extends events {
                 },
                 count: msg.iItemCount,
                 price: msg.iItemCount * gift.price,
+                earn: msg.iItemCount * gift.price,
                 id: id,
                 raw: msg
             }
