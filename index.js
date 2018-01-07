@@ -1,50 +1,43 @@
 const ws = require('ws')
 const md5 = require('md5')
+const delay = require('delay')
 const events = require('events')
 const request = require('request-promise')
 const to_arraybuffer = require('to-arraybuffer')
 const socks_agent = require('socks-proxy-agent')
-const { Taf, TafMx, HUYA, List } = require('huya-lib')
-const REQUEST_TIMEOUT = 10000
-const HEARTBEAT_INTERVAL = 60000
-const FRESH_GIFT_INTERVAL = 30 * 60 * 1000
+const { Taf, TafMx, HUYA, List } = require('./lib')
 
+const timeout = 30000
+const close_delay = 100
+const heartbeat_interval = 60000
+const fresh_gift_interval = 60 * 60 * 1000
+const r = request.defaults({ json: true, gzip: true, timeout: timeout, headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36' } })
 
 class huya_danmu extends events {
 
-    constructor(roomid, proxy) {
+    constructor(opt) {
         super()
-        this._roomid = roomid
-        this.set_proxy(proxy)
+        if (typeof opt === 'string')
+            this._roomid = opt
+        else if (typeof opt === 'object') {
+            this._roomid = opt.roomid
+            this.set_proxy(opt.proxy)
+        }
         this._gift_info = {}
         this._chat_list = new List()
-        this._ws_url = 'ws://ws.api.huya.com'
         this._emitter = new events.EventEmitter()
     }
 
     set_proxy(proxy) {
-        this._agent = null
-        if (proxy) {
-            let auth = ''
-            if (proxy.name && proxy.pass)
-                auth = `${proxy.name}:${proxy.pass}@`
-            let socks_url = `socks://${auth}${proxy.ip}:${proxy.port || 8080}`
-            this._agent = new socks_agent(socks_url)
-        }
+        this._agent = new socks_agent(proxy)
     }
 
     async _get_chat_info() {
-        let opt = {
-            url: `https://m.huya.com/${this._roomid}`,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36'
-            },
-            timeout: REQUEST_TIMEOUT,
-            gzip: true,
-            agent: this._agent
-        }
         try {
-            let body = await request(opt)
+            let body = await r({
+                url: `https://m.huya.com/${this._roomid}`,
+                agent: this._agent
+            })
             let info = {}
             let subsid_array = body.match(/var SUBSID = '(.*)';/)
             let topsid_array = body.match(/var TOPSID = '(.*)';/)
@@ -54,26 +47,24 @@ class huya_danmu extends events {
             info.topsid = topsid_array[1] === '' ? 0 : parseInt(topsid_array[1])
             info.yyuid = parseInt(yyuid_array[1])
             return info
-        } catch (e) { }
+        } catch (e) {
+            this.emit('error', new Error('Fail to get info'))
+        }
     }
 
     async start() {
         if (this._starting) return
         this._starting = true
         this._info = await this._get_chat_info()
-        if (!this._info || !this._starting) {
-            this.emit('error', new Error('Fail to get info'))
-            return this.emit('close')
-        }
+        if (!this._info) return this.emit('close')
         this._main_user_id = new HUYA.UserId()
         this._main_user_id.lUid = this._info.yyuid
         this._main_user_id.sHuYaUA = "webh5&1.0.0&websocket"
         this._start_ws()
     }
 
-
     _start_ws() {
-        this._client = new ws(this._ws_url, {
+        this._client = new ws('ws://ws.api.huya.com', {
             perMessageDeflate: false,
             agent: this._agent
         })
@@ -81,41 +72,40 @@ class huya_danmu extends events {
             this._get_gift_list()
             this._bind_ws_info()
             this._heartbeat()
-            this._heartbeat_timer = setInterval(this._heartbeat.bind(this), HEARTBEAT_INTERVAL)
-            this._fresh_gift_list_timer = setInterval(this._get_gift_list.bind(this), FRESH_GIFT_INTERVAL)
+            this._heartbeat_timer = setInterval(this._heartbeat.bind(this), heartbeat_interval)
+            this._fresh_gift_list_timer = setInterval(this._get_gift_list.bind(this), fresh_gift_interval)
             this.emit('connect')
         })
         this._client.on('error', err => {
             this.emit('error', err)
         })
-        this._client.on('close', () => {
+        this._client.on('close', async () => {
             this._stop()
             this.emit('close')
+            await delay(close_delay)
+            this._reconnect && this.start()
         })
         this._client.on('message', this._on_mes.bind(this))
         this._emitter.on("8006", msg => {
-            let msg_obj = {
+            const msg_obj = {
                 type: 'online',
                 time: new Date().getTime(),
-                count: msg.iAttendeeCount,
-                raw: msg
+                count: msg.iAttendeeCount
             }
             this.emit('message', msg_obj)
         })
         this._emitter.on("1400", msg => {
-            let id = md5(JSON.stringify(msg))
-            let msg_obj = {
+            const msg_obj = {
                 type: 'chat',
                 time: new Date().getTime(),
                 from: {
                     name: msg.tUserInfo.sNickName,
                     rid: msg.tUserInfo.lUid + '',
                 },
-                id: id,
-                content: msg.sContent,
-                raw: msg
+                id: md5(JSON.stringify(msg)),
+                content: msg.sContent
             }
-            let can_emit = this._chat_list.push(msg_obj.from.rid + msg_obj.content, msg_obj.time)
+            const can_emit = this._chat_list.push(msg_obj.from.rid + msg_obj.content, msg_obj.time)
             can_emit && this.emit('message', msg_obj)
         })
         this._emitter.on("6501", msg => {
@@ -133,8 +123,7 @@ class huya_danmu extends events {
                 count: msg.iItemCount,
                 price: msg.iItemCount * gift.price,
                 earn: msg.iItemCount * gift.price,
-                id: id,
-                raw: msg
+                id: id
             }
             this.emit('message', msg_obj)
         })
@@ -247,6 +236,7 @@ class huya_danmu extends events {
     }
 
     stop() {
+        this._reconnect = false
         this.removeAllListeners()
         this._stop()
     }
