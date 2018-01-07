@@ -77,6 +77,14 @@ client.start()
 client.stop()
 ```
 
+### 断线重连
+
+```javascript
+client.on('close', _ => {
+    client.start()
+})
+```
+
 ### 监听事件
 
 ```javascript

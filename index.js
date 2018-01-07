@@ -1,6 +1,5 @@
 const ws = require('ws')
 const md5 = require('md5')
-const delay = require('delay')
 const events = require('events')
 const request = require('request-promise')
 const to_arraybuffer = require('to-arraybuffer')
@@ -82,8 +81,6 @@ class huya_danmu extends events {
         this._client.on('close', async () => {
             this._stop()
             this.emit('close')
-            await delay(close_delay)
-            this._reconnect && this.start()
         })
         this._client.on('message', this._on_mes.bind(this))
         this._emitter.on("8006", msg => {
@@ -236,7 +233,6 @@ class huya_danmu extends events {
     }
 
     stop() {
-        this._reconnect = false
         this.removeAllListeners()
         this._stop()
     }
