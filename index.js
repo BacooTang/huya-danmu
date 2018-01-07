@@ -7,7 +7,6 @@ const socks_agent = require('socks-proxy-agent')
 const { Taf, TafMx, HUYA, List } = require('./lib')
 
 const timeout = 30000
-const close_delay = 100
 const heartbeat_interval = 60000
 const fresh_gift_interval = 60 * 60 * 1000
 const r = request.defaults({ json: true, gzip: true, timeout: timeout, headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 5.1.1; Nexus 6 Build/LYZ28E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Mobile Safari/537.36' } })
