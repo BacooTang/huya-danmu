@@ -650,6 +650,9 @@ Taf.DataHelp = {
             case Taf.DataHelp.EN_INT32:
                 this.buf.position += 4;
                 break;
+            case Taf.DataHelp.EN_INT64:
+                this.buf.position+=8;
+                break;
             case Taf.DataHelp.EN_STRING1:
                 var e = this.buf.readUInt8();
                 this.buf.position += e;
