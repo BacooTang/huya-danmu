@@ -37,9 +37,16 @@ class huya_danmu extends events {
                 agent: this._agent
             })
             let info = {}
-            let subsid_array = body.match(/var SUBSID = '(.*)';/)
-            let topsid_array = body.match(/var TOPSID = '(.*)';/)
-            let yyuid_array = body.match(/ayyuid: '(.*)',/)
+            // @deprecated
+            // let subsid_array = body.match(/var SUBSID = '(.*)';/)
+            // let topsid_array = body.match(/var TOPSID = '(.*)';/)
+            // let yyuid_array = body.match(/ayyuid: '(.*)',/)
+
+            // data structure updated of huya new version, see test_data_20210626.html
+            let subsid_array = body.match(/"lSubChannelId"\s*:\s*([^,]*)/)
+            let topsid_array = body.match(/"lChannelId"\s*:\s*([^,]*)/)
+            let yyuid_array = body.match(/"lUid"\s*:\s*([^,]*)/)
+
             if (!subsid_array || !topsid_array || !yyuid_array) return
             info.subsid = subsid_array[1] === '' ? 0 : parseInt(subsid_array[1])
             info.topsid = topsid_array[1] === '' ? 0 : parseInt(topsid_array[1])

@@ -4,6 +4,12 @@ huya-danmu 是Node.js版本虎牙直播弹幕监听模块。
 
 简单易用，使用不到三十行代码，你就可以使用Node.js基于弹幕进一步开发。
 
+## FIXED
+
+@20210626
+1. 虎牙改版，数据结构发生了变化
+2. skipField 方法补充了 EN_INT64，避免采集时的 warning
+
 ## Installation
 
 可以通过本命令安装 huya-danmu:
