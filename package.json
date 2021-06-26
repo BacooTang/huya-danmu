@@ -1,6 +1,6 @@
 {
   "name": "huya-danmu-fix",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "huya danmu module",
   "main": "index.js",
   "scripts": {
