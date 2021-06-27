@@ -639,51 +639,64 @@ Taf.DataHelp = {
             }
     }
     ,
-    Taf.JceInputStream.prototype.skipField = function (t) {
-        switch (t) {
-            case Taf.DataHelp.EN_INT8:
-                this.buf.position += 1;
-                break;
-            case Taf.DataHelp.EN_INT16:
-                this.buf.position += 2;
-                break;
-            case Taf.DataHelp.EN_INT32:
-                this.buf.position += 4;
-                break;
-            case Taf.DataHelp.EN_STRING1:
-                var e = this.buf.readUInt8();
-                this.buf.position += e;
-                break;
-            case Taf.DataHelp.EN_STRING4:
-                var i = this.buf.readInt32();
-                this.buf.position += i;
-                break;
-            case Taf.DataHelp.EN_STRUCTBEGIN:
-                this.skipToStructEnd();
-                break;
-            case Taf.DataHelp.EN_STRUCTEND:
-            case Taf.DataHelp.EN_ZERO:
-                break;
-            case Taf.DataHelp.EN_MAP:
-                for (var r = this.readInt32(0, !0), n = 0; 2 * r > n; ++n) {
-                    var s = this.readFrom();
-                    this.skipField(s.type)
+    Taf.JceInputStream.prototype.skipField = function(type) {
+        switch (type) {
+        case Taf.DataHelp.EN_INT8:
+            this.buf.position += 1;
+            break;
+        case Taf.DataHelp.EN_INT16:
+            this.buf.position += 2;
+            break;
+        case Taf.DataHelp.EN_INT32:
+            this.buf.position += 4;
+            break;
+        case Taf.DataHelp.EN_INT64:
+            this.buf.position += 8;
+            break;
+        case Taf.DataHelp.EN_STRING1:
+            var a = this.buf.readUInt8();
+            this.buf.position += a;
+            break;
+        case Taf.DataHelp.EN_STRING4:
+            var b = this.buf.readInt32();
+            this.buf.position += b;
+            break;
+        case Taf.DataHelp.EN_STRUCTBEGIN:
+            this.skipToStructEnd();
+            break;
+        case Taf.DataHelp.EN_STRUCTEND:
+        case Taf.DataHelp.EN_ZERO:
+            break;
+        case Taf.DataHelp.EN_MAP:
+            {
+                var size = this.readInt32(0, true);
+                for (var i = 0; i < size * 2; ++i) {
+                    var head = this.readFrom();
+                    this.skipField(head.type)
                 }
-                break;
-            case Taf.DataHelp.EN_SIMPLELIST:
-                var s = this.readFrom();
-                if (s.type != Taf.DataHelp.EN_INT8)
-                    throw Error("skipField with invalid type, type value: " + t + "," + s.type);
-                this.buf.position += this.readInt32(0, !0);
-                break;
-            case Taf.DataHelp.EN_LIST:
-                for (var r = this.readInt32(0, !0), n = 0; r > n; ++n) {
-                    var s = this.readFrom();
-                    this.skipField(s.type)
+                break
+            }
+        case Taf.DataHelp.EN_SIMPLELIST:
+            {
+                var head = this.readFrom();
+                if (head.type != Taf.DataHelp.EN_INT8) {
+                    throw Error("skipField with invalid type, type value: " + type + "," + head.type)
                 }
-                break;
-            default:
-                throw new Error("skipField with invalid type, type value: " + t)
+                var a = this.readInt32(0, true);
+                this.buf.position += a;
+                break
+            }
+        case Taf.DataHelp.EN_LIST:
+            {
+                var size = this.readInt32(0, true);
+                for (var i = 0; i < size; ++i) {
+                    var head = this.readFrom();
+                    this.skipField(head.type)
+                }
+                break
+            }
+        default:
+            throw new Error("skipField with invalid type, type value: " + type)
         }
     }
     ,
